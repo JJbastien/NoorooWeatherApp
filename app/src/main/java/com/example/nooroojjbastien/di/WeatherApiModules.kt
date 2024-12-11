@@ -5,10 +5,13 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import androidx.room.Room
 import com.example.nooroojjbastien.utils.WeatherApiStringDetails
 import com.example.nooroojjbastien.weatherApiService.WeatherApiNetwork
 import com.example.nooroojjbastien.weatherApiService.WeatherApiRepoImplementation
 import com.example.nooroojjbastien.weatherApiService.WeatherApiRepository
+import com.example.nooroojjbastien.local.WeatherDao
+import com.example.nooroojjbastien.local.WeatherDatabase
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
@@ -58,9 +61,10 @@ class WeatherApiModules {
     @Singleton
     fun provideWeatherRepository(
         weatherApi: WeatherApiNetwork,
+        weatherDao: WeatherDao,
         dataStore: DataStore<Preferences>
     ): WeatherApiRepository {
-        return WeatherApiRepoImplementation(weatherApi, dataStore)
+        return WeatherApiRepoImplementation(weatherApi, weatherDao, dataStore)
     }
 
     @Provides
@@ -75,4 +79,24 @@ class WeatherApiModules {
     @Provides
     @Singleton
     fun provideIODispatcher(): CoroutineDispatcher = Dispatchers.IO
+
+    @Provides
+    @Singleton
+    fun provideWeatherDatabase(
+        @ApplicationContext context: Context
+    ): WeatherDatabase {
+        return Room.databaseBuilder(
+            context,
+            WeatherDatabase::class.java,
+            "weather_database"
+        ).build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideWeatherDao(
+        database: WeatherDatabase
+    ): WeatherDao {
+        return database.weatherDao()
+    }
 }
